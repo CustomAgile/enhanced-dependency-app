@@ -12,6 +12,14 @@ Ext.define("enhanced-dependency-app", {
             defaultMargins: '0 10 10 0',
         }
     }, {
+        id: Utils.AncestorPiAppFilter.PANEL_RENDER_AREA_ID,
+        xtype: 'container',
+        layout: {
+            type: 'hbox',
+            align: 'middle',
+            defaultMargins: '0 10 10 0',
+        }
+    }, {
         id: 'grid-area',
         xtype: 'container',
         flex: 1,
@@ -21,46 +29,47 @@ Ext.define("enhanced-dependency-app", {
 
     piLevel0Name: 'Feature',
 
-    launch: function() {
+    launch: function () {
+        Rally.data.wsapi.Proxy.superclass.timeout = 240000;
+
         // Begin loading pi types while waiting for ready event
         var piTypesPromise = Rally.data.util.PortfolioItemHelper.getPortfolioItemTypes();
-        this.on('ready', function() {
+        this.on('ready', function () {
             this.ancestorFilterPlugin = Ext.create('Utils.AncestorPiAppFilter', {
                 ptype: 'UtilsAncestorPiAppFilter',
                 pluginId: 'ancestorFilterPlugin',
+                filtersHidden: false,
                 settingsConfig: {
                     labelWidth: 150
                 },
                 listeners: {
                     scope: this,
-                    ready: function(plugin) {
+                    ready: function (plugin) {
                         piTypesPromise.then({
                             scope: this,
-                            success: function(piTypes) {
+                            success: function (piTypes) {
                                 this.portfolioItemTypes = piTypes;
                                 this.piLevel0Name = piTypes[0].get('Name');
                                 this._addComponents();
                                 plugin.addListener({
                                     scope: this,
-                                    select: function() {
-                                        this._update();
-                                    }
+                                    select: this._update,
+                                    change: this._update
                                 });
                                 this._update();
                             }
-                        })
+                        });
                     },
                 }
             });
             this.addPlugin(this.ancestorFilterPlugin);
         }, this);
     },
-    _addComponents: function() {
+    _addComponents: function () {
         var gridArea = this.down('#grid-area');
         gridArea.removeAll();
 
         var selectorBox = gridArea.add({
-            //cls: 'rui-leftright',
             xtype: 'container',
             layout: 'hbox'
         });
@@ -107,27 +116,6 @@ Ext.define("enhanced-dependency-app", {
         });
         fp.on('fieldsupdated', this._update, this);
 
-        var ft = selectorBox.add({
-            xtype: 'rallyinlinefilterbutton',
-            modelNames: ['HierarchicalRequirement'],
-            context: this.getContext(),
-            margin: '10 5 10 5',
-            stateful: true,
-            stateId: 'grid-filters-3',
-            listeners: {
-                inlinefilterready: this._addInlineFilterPanel,
-                scope: this
-            },
-            inlineFilterPanelConfig: {
-                quickFilterPanelConfig: {
-                    portfolioItemTypes: this.portfolioItemTypes,
-                    modelName: 'HierarchicalRequirement'
-                }
-            }
-        });
-        ft.on('inlinefilterchange', this._update, this);
-
-
         selectorBox.add({
             xtype: 'rallybutton',
             itemId: 'btn-export',
@@ -139,16 +127,13 @@ Ext.define("enhanced-dependency-app", {
             handler: this._exportData
         });
     },
-    _addInlineFilterPanel: function(panel) {
-        this.down('#filter_box').add(panel);
-    },
-    _getSelectorType: function() {
+    _getSelectorType: function () {
         if (this._hasMilestoneScope() || this._hasReleaseScope()) {
             return null;
         }
         return 'rallyreleasecombobox';
     },
-    _getTimeBoxRecord: function() {
+    _getTimeBoxRecord: function () {
         if (this.down('rallymilestonecombobox') && this.down('rallymilestonecombobox').getRecord()) {
             return this.down('rallymilestonecombobox').getRecord();
         }
@@ -163,48 +148,48 @@ Ext.define("enhanced-dependency-app", {
         }
         return null;
     },
-    _hasTimeboxScope: function(type) {
+    _hasTimeboxScope: function (type) {
         this.logger.log('_hasTimeboxScope', this.getContext().getTimeboxScope());
         if (this.getContext().getTimeboxScope() && this.getContext().getTimeboxScope().type.toLowerCase() === type.toLowerCase()) {
             return true;
         }
         return false;
     },
-    _hasMilestoneScope: function() {
+    _hasMilestoneScope: function () {
         return this._hasTimeboxScope('milestone');
     },
-    _hasReleaseScope: function() {
+    _hasReleaseScope: function () {
         return this._hasTimeboxScope('release');
     },
-    onTimeboxScopeChange: function(timeboxScope) {
+    onTimeboxScopeChange: function (timeboxScope) {
         if (timeboxScope && (timeboxScope.getType().toLowerCase() === 'milestone' || timeboxScope.getType() === 'release')) {
             this.callParent(arguments);
-            this._update()
+            this._update();
         }
     },
-    _exportData: function() {
+    _exportData: function () {
         if (!this.down('#grid-dependencies')) {
             return;
         }
 
         var columnCfgs = this._getColumnCfgs(),
             headers = [];
-        Ext.Array.each(columnCfgs, function(c) {
+        Ext.Array.each(columnCfgs, function (c) {
             headers.push(c.text);
         });
         var csv = [headers.join(',')];
 
         var store = this.down('#grid-dependencies').getStore();
-        store.each(function(r) {
+        store.each(function (r) {
             var row = [];
-            Ext.Array.each(columnCfgs, function(c) {
+            Ext.Array.each(columnCfgs, function (c) {
                 var val = r.get(c.dataIndex);
                 if (Ext.isObject(val)) {
                     if (val.FormattedID) {
                         val = Ext.String.format("{0}: {1}", val.FormattedID, val.Name);
                     }
                     else {
-                        val = val.Name || val._refObjectName
+                        val = val.Name || val._refObjectName;
                     }
                 }
                 row.push(val);
@@ -215,7 +200,7 @@ Ext.define("enhanced-dependency-app", {
         var file_name = Ext.String.format('dependencies-{0}.csv', Rally.util.DateTime.format(new Date(), 'Y-m-d-h-i-s'));
         CArABU.technicalservices.FileUtility.saveCSVToFile(csv.join('\r\n'), file_name);
     },
-    _getTimeboxFilter: function() {
+    _getTimeboxFilter: function () {
         var tbRecord = this._getTimeBoxRecord();
         this.logger.log('_getTimeBoxRecord', tbRecord);
 
@@ -243,23 +228,10 @@ Ext.define("enhanced-dependency-app", {
             filters = Rally.data.wsapi.Filter.or(filters);
         }
 
-        //rallyinlinefilterbutton
-        if (filters) {
-            filters = filters.and({
-                property: 'DirectChildrenCount',
-                value: 0
-            });
-
-            var filterButton = this.down('rallyinlinefilterbutton');
-            if (filterButton && filterButton.inlineFilterPanel && filterButton.getWsapiFilter()) {
-                filters = filters.and(filterButton.getWsapiFilter());
-            }
-        }
-
         return filters;
 
     },
-    _update: function() {
+    _update: function () {
         this.setLoading(true);
         // If there is a current chart store, force it to stop loading pages
         // Note that recreating the grid will then create a new chart store with
@@ -285,19 +257,19 @@ Ext.define("enhanced-dependency-app", {
             scope: this
         });
     },
-    _getFetch: function(isPredecessorFetch) {
+    _getFetch: function (isPredecessorFetch) {
         var fields = this.down('fieldpickerbutton').getFields();
         this.logger.log('_getFetch', fields);
         return fields;
     },
-    _getAdditionalPredecessorFields: function() {
+    _getAdditionalPredecessorFields: function () {
         var fields = this.down('fieldpickerbutton').getFieldObjects(),
             hiddenFields = ['Predecessors', 'ObjectID'];
 
         this.logger.log('_getAdditionalPredecessorFields', fields);
 
         var additionalFields = [];
-        Ext.Array.each(fields, function(f) {
+        Ext.Array.each(fields, function (f) {
             var allowedValues = null;
             if (!Ext.Array.contains(hiddenFields, f.name)) {
                 if (f.name === 'ScheduleState') {
@@ -308,9 +280,9 @@ Ext.define("enhanced-dependency-app", {
                     displayName: 'Predecessor ' + f.displayName
                 };
                 if (allowedValues) {
-                    nf.getAllowedValueStore = function() {
+                    nf.getAllowedValueStore = function () {
                         return allowedValues;
-                    }
+                    };
                 }
                 additionalFields.push(nf);
             }
@@ -318,18 +290,20 @@ Ext.define("enhanced-dependency-app", {
         this.logger.log('_getAdditionalPredecessorFields', additionalFields);
         return additionalFields;
     },
-    _fetchData: function(model) {
+    _fetchData: function (model) {
         var filters = Ext.create('Rally.data.wsapi.Filter', {
-                property: 'Predecessors.ObjectID',
-                operator: '!=',
-                value: null
-            }),
+            property: 'Predecessors.ObjectID',
+            operator: '!=',
+            value: null
+        }),
             timeboxFilter = this._getTimeboxFilter();
 
         filters = filters.and(timeboxFilter);
-        var ancestorFilter = this.ancestorFilterPlugin.getFilterForType('HierarchicalRequirement');
-        if (ancestorFilter) {
-            filters = filters.and(ancestorFilter);
+        var ancestorFilters = this.ancestorFilterPlugin.getAllFiltersForType('HierarchicalRequirement');
+        if (ancestorFilters) {
+            for (var i = 0; i < ancestorFilters.length; i++) {
+                filters = filters.and(ancestorFilters[i]);
+            }
         }
 
         this.logger.log('_fetchData filters', filters, filters.toString());
@@ -343,7 +317,7 @@ Ext.define("enhanced-dependency-app", {
             model: model,
             fetch: this._getFetch(),
             filters: filters,
-            limit: 'Infinity',
+            limit: this.searchAllProjects() ? 2000 : 'Infinity',
             context: dataContext
         }).load({
             callback: this._loadPredecessors,
@@ -351,11 +325,11 @@ Ext.define("enhanced-dependency-app", {
         });
 
     },
-    _getColumnCfgs: function() {
+    _getColumnCfgs: function () {
         var fields = this.down('fieldpickerbutton').getFieldObjects();
         var cols = [];
 
-        Ext.Array.each(fields, function(f) {
+        Ext.Array.each(fields, function (f) {
             var field_name = '__p' + f.name;
 
             var field = {
@@ -367,14 +341,14 @@ Ext.define("enhanced-dependency-app", {
                 field.flex = 1;
             }
             var template = Rally.ui.renderer.RendererFactory.getRenderTemplate(f);
-            field.renderer = function(v, m, r) {
+            field.renderer = function (v, m, r) {
                 return template.apply(r.get('__predecessor'));
-            }
+            };
             field.sortable = false;
             cols.push(field);
         });
 
-        Ext.Array.each(fields, function(f) {
+        Ext.Array.each(fields, function (f) {
             var field = {
                 dataIndex: f.name,
                 text: f.displayName
@@ -383,17 +357,17 @@ Ext.define("enhanced-dependency-app", {
                 field.flex = 1;
             }
             var template = Rally.ui.renderer.RendererFactory.getRenderTemplate(f);
-            field.renderer = function(v, m, r) {
+            field.renderer = function (v, m, r) {
                 return template.apply(r.getData());
-            }
-            field.doSort = function(state) {
+            };
+            field.doSort = function (state) {
                 var ds = this.up('rallygrid').getStore();
                 var field = this.getSortParam();
                 console.log('ds', ds.sorters);
                 ds.sort({
                     property: field,
                     direction: state,
-                    sorterFn: function(v1, v2) {
+                    sorterFn: function (v1, v2) {
                         v1 = v1.get(field);
                         v2 = v2.get(field);
                         if (Ext.isObject(v1)) {
@@ -417,18 +391,18 @@ Ext.define("enhanced-dependency-app", {
             cols.push(field);
         });
 
-        this.logger.log('_getColumnCfgs', cols)
+        this.logger.log('_getColumnCfgs', cols);
         return cols;
     },
-    _objectSort: function(state) {
+    _objectSort: function (state) {
 
     },
-    _loadPredecessors: function(records, operation) {
+    _loadPredecessors: function (records, operation) {
         this.logger.log('_loadPredecessors', records, operation);
         var predecessorFetch = this._getFetch(),
             promises = [],
             objectIDs = [];
-        Ext.Array.each(records, function(r) {
+        Ext.Array.each(records, function (r) {
             if (!Ext.Array.contains(objectIDs, r.get('ObjectID'))) {
                 promises.push(r.loadPredecessors(predecessorFetch));
                 objectIDs.push(r.get('ObjectID')); //this is a hack to work around the issue where multiple records are being returned from store, but not api (not sure why)
@@ -448,24 +422,24 @@ Ext.define("enhanced-dependency-app", {
 
     },
 
-    _buildCustomGrid: function(results) {
+    _buildCustomGrid: function (results) {
         this.logger.log('_buildCustomGrid', results);
         var data = [],
             fields = this.down('fieldpickerbutton').getFields();
 
-        Ext.Array.each(results, function(r) {
+        Ext.Array.each(results, function (r) {
             var predecessors = r.get('__predecessors');
-            Ext.Array.each(predecessors, function(p) {
+            Ext.Array.each(predecessors, function (p) {
                 row = r.getData();
                 row.__predecessor = p;
-                Ext.Array.each(fields, function(f) {
+                Ext.Array.each(fields, function (f) {
                     row['__p' + f] = p[f];
                 });
                 data.push(row);
             });
         });
 
-        var storeFields = fields.concat(Ext.Array.map(fields, function(f) {
+        var storeFields = fields.concat(Ext.Array.map(fields, function (f) {
             return '__p' + f;
         })).concat(['__predecessor']);
         storeFields.unshift('_ref');
@@ -494,18 +468,18 @@ Ext.define("enhanced-dependency-app", {
         });
         this.setLoading(false);
     },
-    _showErrorNotification: function(error) {
+    _showErrorNotification: function (error) {
         this.setLoading(false);
         this.logger.log('_showErrorNotification', error);
         Rally.ui.notify.Notifier.showError({ message: error });
     },
 
-    setLoading: function(loading) {
+    setLoading: function (loading) {
         var displayBox = this.down('#display_box');
         displayBox.setLoading(loading);
     },
 
-    getOptions: function() {
+    getOptions: function () {
         return [{
             text: 'About...',
             handler: this._launchInfo,
@@ -513,16 +487,16 @@ Ext.define("enhanced-dependency-app", {
         }];
     },
 
-    _launchInfo: function() {
+    _launchInfo: function () {
         if (this.about_dialog) { this.about_dialog.destroy(); }
         this.about_dialog = Ext.create('Rally.technicalservices.InfoLink', {});
     },
 
-    isExternal: function() {
-        return typeof(this.getAppId()) == 'undefined';
+    isExternal: function () {
+        return typeof (this.getAppId()) == 'undefined';
     },
 
-    searchAllProjects: function() {
+    searchAllProjects: function () {
         return this.ancestorFilterPlugin.getIgnoreProjectScope();
     },
 
@@ -531,10 +505,10 @@ Ext.define("enhanced-dependency-app", {
      * insert its settings. The SDK decides if an app should have a settings menu option
      * *before* initializing app plugins created in app.launch()
      */
-    getSettingsFields: function() {
+    getSettingsFields: function () {
         return [{
             xtype: 'container'
-        }]
+        }];
     }
 
 });
