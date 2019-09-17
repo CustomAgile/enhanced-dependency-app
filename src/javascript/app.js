@@ -290,7 +290,8 @@ Ext.define("enhanced-dependency-app", {
         this.logger.log('_getAdditionalPredecessorFields', additionalFields);
         return additionalFields;
     },
-    _fetchData: function (model) {
+    _fetchData: async function (model) {
+        var loadingFailed = false;
         var filters = Ext.create('Rally.data.wsapi.Filter', {
             property: 'Predecessors.ObjectID',
             operator: '!=',
@@ -299,7 +300,14 @@ Ext.define("enhanced-dependency-app", {
             timeboxFilter = this._getTimeboxFilter();
 
         filters = filters.and(timeboxFilter);
-        var ancestorFilters = this.ancestorFilterPlugin.getAllFiltersForType('HierarchicalRequirement');
+        var ancestorFilters = await this.ancestorFilterPlugin.getAllFiltersForType('HierarchicalRequirement').catch((e) => {
+            this._showErrorNotification(e.message || e);
+            loadingFailed = true;
+            this.setLoading(false);
+        });
+
+        if (loadingFailed) { return; }
+
         if (ancestorFilters) {
             for (var i = 0; i < ancestorFilters.length; i++) {
                 filters = filters.and(ancestorFilters[i]);
@@ -318,7 +326,8 @@ Ext.define("enhanced-dependency-app", {
             fetch: this._getFetch(),
             filters: filters,
             limit: this.searchAllProjects() ? 2000 : 'Infinity',
-            context: dataContext
+            context: dataContext,
+            enablePostGet: true
         }).load({
             callback: this._loadPredecessors,
             scope: this
