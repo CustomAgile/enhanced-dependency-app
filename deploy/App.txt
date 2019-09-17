@@ -3,11 +3,11 @@
 <head>
     <title>enhanced-dependency-app-1.1.1</title>
     <!--  (c) 2019 Custom Agile.  All Rights Reserved. -->
-    <!--  Build Date: Tue Sep 17 2019 11:36:04 GMT-0700 (Pacific Daylight Time) -->
+    <!--  Build Date: Tue Sep 17 2019 13:59:01 GMT-0700 (Pacific Daylight Time) -->
 
     <script type="text/javascript">
-        var APP_BUILD_DATE = "Tue Sep 17 2019 11:36:04 GMT-0700 (Pacific Daylight Time)";
-        var CHECKSUM = 192041867769;
+        var APP_BUILD_DATE = "Tue Sep 17 2019 13:59:01 GMT-0700 (Pacific Daylight Time)";
+        var CHECKSUM = 191904247685;
     </script>
 
     <script type="text/javascript" src="/apps/2.1/sdk.js"></script>
@@ -2640,7 +2640,6 @@ Ext.define("enhanced-dependency-app", {
         var ancestorFilters = await this.ancestorFilterPlugin.getAllFiltersForType('HierarchicalRequirement').catch((e) => {
             this._showErrorNotification(e.message || e);
             loadingFailed = true;
-            this.setLoading(false);
         });
 
         if (loadingFailed) { return; }

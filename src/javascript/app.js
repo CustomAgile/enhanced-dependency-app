@@ -303,7 +303,6 @@ Ext.define("enhanced-dependency-app", {
         var ancestorFilters = await this.ancestorFilterPlugin.getAllFiltersForType('HierarchicalRequirement').catch((e) => {
             this._showErrorNotification(e.message || e);
             loadingFailed = true;
-            this.setLoading(false);
         });
 
         if (loadingFailed) { return; }
