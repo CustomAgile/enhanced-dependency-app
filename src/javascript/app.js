@@ -141,7 +141,7 @@ Ext.define("enhanced-dependency-app", {
             return this.down('rallyreleasecombobox').getRecord();
         }
 
-        this.logger.log('_getTimeboxRecord', this.getContext().getTimeboxScope());
+        // this.logger.log('_getTimeboxRecord', this.getContext().getTimeboxScope());
 
         if (this._hasMilestoneScope() || this._hasReleaseScope()) {
             return this.getContext().getTimeboxScope().getRecord() || null;
@@ -149,7 +149,7 @@ Ext.define("enhanced-dependency-app", {
         return null;
     },
     _hasTimeboxScope: function (type) {
-        this.logger.log('_hasTimeboxScope', this.getContext().getTimeboxScope());
+        // this.logger.log('_hasTimeboxScope', this.getContext().getTimeboxScope());
         if (this.getContext().getTimeboxScope() && this.getContext().getTimeboxScope().type.toLowerCase() === type.toLowerCase()) {
             return true;
         }
@@ -202,7 +202,7 @@ Ext.define("enhanced-dependency-app", {
     },
     _getTimeboxFilter: function () {
         var tbRecord = this._getTimeBoxRecord();
-        this.logger.log('_getTimeBoxRecord', tbRecord);
+        // this.logger.log('_getTimeBoxRecord', tbRecord);
 
         var filters = null;
 
@@ -259,14 +259,14 @@ Ext.define("enhanced-dependency-app", {
     },
     _getFetch: function (isPredecessorFetch) {
         var fields = this.down('fieldpickerbutton').getFields();
-        this.logger.log('_getFetch', fields);
+        // this.logger.log('_getFetch', fields);
         return fields;
     },
     _getAdditionalPredecessorFields: function () {
         var fields = this.down('fieldpickerbutton').getFieldObjects(),
             hiddenFields = ['Predecessors', 'ObjectID'];
 
-        this.logger.log('_getAdditionalPredecessorFields', fields);
+        // this.logger.log('_getAdditionalPredecessorFields', fields);
 
         var additionalFields = [];
         Ext.Array.each(fields, function (f) {
@@ -287,7 +287,7 @@ Ext.define("enhanced-dependency-app", {
                 additionalFields.push(nf);
             }
         });
-        this.logger.log('_getAdditionalPredecessorFields', additionalFields);
+        // this.logger.log('_getAdditionalPredecessorFields', additionalFields);
         return additionalFields;
     },
     _fetchData: async function (model) {
@@ -308,12 +308,12 @@ Ext.define("enhanced-dependency-app", {
         if (loadingFailed) { return; }
 
         if (ancestorFilters) {
-            for (var i = 0; i < ancestorFilters.length; i++) {
+            for (var i = 0;i < ancestorFilters.length;i++) {
                 filters = filters.and(ancestorFilters[i]);
             }
         }
 
-        this.logger.log('_fetchData filters', filters, filters.toString());
+        // // this.logger.log('_fetchData filters', filters, filters.toString());
 
         var dataContext = this.getContext().getDataContext();
         if (this.searchAllProjects()) {
@@ -399,14 +399,14 @@ Ext.define("enhanced-dependency-app", {
             cols.push(field);
         });
 
-        this.logger.log('_getColumnCfgs', cols);
+        // // this.logger.log('_getColumnCfgs', cols);
         return cols;
     },
     _objectSort: function (state) {
 
     },
     _loadPredecessors: function (records, operation) {
-        this.logger.log('_loadPredecessors', records, operation);
+        // // this.logger.log('_loadPredecessors', records, operation);
         var predecessorFetch = this._getFetch(),
             promises = [],
             objectIDs = [];
@@ -431,7 +431,7 @@ Ext.define("enhanced-dependency-app", {
     },
 
     _buildCustomGrid: function (results) {
-        this.logger.log('_buildCustomGrid', results);
+        // // this.logger.log('_buildCustomGrid', results);
         var data = [],
             fields = this.down('fieldpickerbutton').getFields();
 
@@ -478,7 +478,7 @@ Ext.define("enhanced-dependency-app", {
     },
     _showErrorNotification: function (error) {
         this.setLoading(false);
-        this.logger.log('_showErrorNotification', error);
+        // this.logger.log('_showErrorNotification', error);
         Rally.ui.notify.Notifier.showError({ message: error });
     },
 
