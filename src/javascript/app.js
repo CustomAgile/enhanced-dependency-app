@@ -39,6 +39,7 @@ Ext.define("enhanced-dependency-app", {
                 ptype: 'UtilsAncestorPiAppFilter',
                 pluginId: 'ancestorFilterPlugin',
                 filtersHidden: false,
+                whiteListFields: ['Milestones', 'Tags', 'c_EnterpriseApprovalEA'],
                 settingsConfig: {
                     labelWidth: 150
                 },
