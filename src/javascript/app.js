@@ -39,7 +39,8 @@ Ext.define("enhanced-dependency-app", {
                 ptype: 'UtilsAncestorPiAppFilter',
                 pluginId: 'ancestorFilterPlugin',
                 filtersHidden: false,
-                whiteListFields: ['Milestones', 'Tags', 'c_EnterpriseApprovalEA'],
+                visibleTab: 'hierarchicalrequirement',
+                whiteListFields: ['Milestones', 'Tags', 'c_EnterpriseApprovalEA', 'c_EAEpic'],
                 settingsConfig: {
                     labelWidth: 150
                 },
@@ -309,7 +310,7 @@ Ext.define("enhanced-dependency-app", {
         if (loadingFailed) { return; }
 
         if (ancestorFilters) {
-            for (var i = 0;i < ancestorFilters.length;i++) {
+            for (var i = 0; i < ancestorFilters.length; i++) {
                 filters = filters.and(ancestorFilters[i]);
             }
         }

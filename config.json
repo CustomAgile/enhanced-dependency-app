@@ -1,5 +1,6 @@
 {
     "sdk": "2.1",
+    "repository": "https://github.com/CustomAgile/enhanced-dependency-app",
     "className": "enhanced-dependency-app",
     "javascript": [
         "node_modules/@agile-central-technical-services/utils-cancel-store-load/index.js",
@@ -8,7 +9,7 @@
         "src/javascript/utils/*.js",
         "src/javascript/*.js"
     ],
-    "css":[
+    "css": [
         "node_modules/@customagile/ancestor-pi-multi-level-pi-app-filter/index.css"
     ]
 }
