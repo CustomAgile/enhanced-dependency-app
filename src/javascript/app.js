@@ -40,7 +40,7 @@ Ext.define("enhanced-dependency-app", {
                 pluginId: 'ancestorFilterPlugin',
                 filtersHidden: false,
                 visibleTab: 'hierarchicalrequirement',
-                whiteListFields: ['Milestones', 'Tags', 'c_EnterpriseApprovalEA', 'c_EAEpic'],
+                whiteListFields: ['Milestones', 'Tags', 'c_EnterpriseApprovalEA', 'c_EAEpic', 'DisplayColor'],
                 settingsConfig: {
                     labelWidth: 150
                 },
